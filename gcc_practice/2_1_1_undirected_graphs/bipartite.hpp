@@ -81,7 +81,7 @@ public:
     }
 
   bool is_bipartite () const { return is_bip; }
-
+  
   int get_color (int v) const { return is_bip ? marked[v] : 0; } 
 
   std::vector<int> & get_V () { return V; }

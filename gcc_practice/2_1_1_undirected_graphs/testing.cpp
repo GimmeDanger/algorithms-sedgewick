@@ -5,6 +5,7 @@
 #include "breadth_first_search.hpp"
 #include "connected_components.hpp"
 #include "bipartite.hpp"
+#include "cycle.hpp"
 
 using namespace std;
 
@@ -94,7 +95,7 @@ int main ()
 		}
 	cout << endl;
 
-	cout << "bipartite Testing: " << endl;
+	cout << "Bipartite Testing: " << endl;
 
 	graph GGGG_1 (8);
 
@@ -138,5 +139,38 @@ int main ()
 	cout << endl;
 	cout << endl;
 
+	cout << "Cycle Testing: " << endl;
+
+	graph G_1 (1);
+	G_1.add_edge (0, 0);
+	Cycle G_1_cycle (G_1);
+	cout << "Has cycle? " << (G_1_cycle.has_cycle () ? "yes" : "no") << " ";
+	for (auto v : G_1_cycle.get_cycle ())
+		cout << v << " ";
+	cout << endl;
+
+	graph G_2 (3);
+	G_2.add_edge (0, 1);
+	G_2.add_edge (1, 0);
+	G_2.add_edge (1, 2);
+	Cycle G_2_cycle (G_2);
+	cout << "Has cycle? " << (G_2_cycle.has_cycle () ? "yes" : "no") << " ";
+	for (auto v : G_2_cycle.get_cycle ())
+		cout << v << " ";
+	cout << endl;
+
+	graph G_3 (5);
+	G_3.add_edge (0, 1);
+	G_3.add_edge (1, 2);
+	G_3.add_edge (1, 4);
+	G_3.add_edge (2, 3);
+	G_3.add_edge (3, 4);
+	Cycle G_3_cycle (G_3);
+	cout << "Has cycle? " << (G_3_cycle.has_cycle () ? "yes" : "no") << " ";
+	for (auto v : G_3_cycle.get_cycle ())
+		cout << v << " ";
+	cout << endl;
+
 	return 0;
 }
+
