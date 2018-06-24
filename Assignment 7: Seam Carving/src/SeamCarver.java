@@ -2,30 +2,32 @@ import edu.princeton.cs.algs4.Picture;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
+/**
+ *
+ */
 public class SeamCarver {
 
-    private final EnergyDigraph eDAG;
-    private Picture mPicture;
-    private int mWidth;
-    private int mHeight;
-    private boolean isTransposed;
-    private boolean isOperHoriz;
+    private final EnergyDigraph eDAG; //<
+    private Picture mPicture;         //<
+    private int mWidth;               //<
+    private int mHeight;              //<
+    private boolean isTransposed;     //<
+    private boolean isOperHoriz;      //<
 
+    /**
+     *
+     */
     private class EnergyDigraph {
-        private int mHeight;
-        private int mWidth;
-        private int mDims;
-        private final double[] mEnergy;
-        private final double[] mDistTo;
-        private final int[] mEdgeTo;
+        private int mHeight;             //<
+        private int mWidth;              //<
+        private int mDims;               //<
+        private double[] mEnergy;        //<
 
         public EnergyDigraph(int height, int width) {
             mHeight = height;
             mWidth = width;
             mDims = mHeight * mWidth;
             mEnergy = new double[mDims];
-            mDistTo = new double[mDims];
-            mEdgeTo = new int[mDims];
         }
 
         private int coordsToPixel(int x, int y) {
@@ -76,45 +78,47 @@ public class SeamCarver {
             return topological;
         }
 
-        private void relax(int pixel, int sourcePixel) {
-            if (isInRange(pixel) && mDistTo[pixel] > mDistTo[sourcePixel] + mEnergy[pixel]) {
-                mDistTo[pixel] = mDistTo[sourcePixel] + mEnergy[pixel];
-                mEdgeTo[pixel] = sourcePixel;
+        private void relax(int pixel, int sourcePixel, double[] distTo, int[] edgeTo) {
+            if (isInRange(pixel) && distTo[pixel] > distTo[sourcePixel] + mEnergy[pixel]) {
+                distTo[pixel] = distTo[sourcePixel] + mEnergy[pixel];
+                edgeTo[pixel] = sourcePixel;
             }
         }
 
         // sequence of indices for vertical seam
         public int[] findVerticalSeam() {
             int[] seam = new int[mHeight];
+            int[] edgeTo = new int[mDims];
+            double[] distTo = new double[mDims];
             double seamDistance = Double.POSITIVE_INFINITY;
             int leftBottomPixel = coordsToPixel(0, mHeight-1);
 
             for (int s = 0; s < mWidth; s++) {
                 // Initialize distances from s to any vertex (pixel)
                 for (int p = 0; p < mDims; p++) {
-                    mDistTo[p] = Double.POSITIVE_INFINITY;
-                    mEdgeTo[p] = -1;
+                    distTo[p] = Double.POSITIVE_INFINITY;
+                    edgeTo[p] = -1;
                 }
-                mDistTo[s] = 0.0;
+                distTo[s] = 0.0;
                 // Relax adjacent pixels in topological order to find SP
                 for (int p : topologicalOrder(s)) {
                     int x = pixelToCoordX(p);
                     int y = pixelToCoordY(p);
                     if (y < mHeight - 1) {
                         // relax down-left
-                        if (x > 0) relax(p + mWidth - 1, p);
+                        if (x > 0) relax(p + mWidth - 1, p, distTo, edgeTo);
                         // relax down-left
-                        if (x < mWidth - 1) relax(p + mWidth + 1, p);
-                        relax(p + mWidth, p);
+                        if (x < mWidth - 1) relax(p + mWidth + 1, p, distTo, edgeTo);
+                        relax(p + mWidth, p, distTo, edgeTo);
                     }
                 }
                 // Find min distance from top to bottom and appropriate bottom pixel
                 int minBottomPixel = leftBottomPixel;
                 double minDistance = Double.POSITIVE_INFINITY;
                 for (int w = leftBottomPixel; w < mDims; w++) {
-                    if (minDistance > mDistTo[w]) {
+                    if (minDistance > distTo[w]) {
                         minBottomPixel = w;
-                        minDistance = mDistTo[w];
+                        minDistance = distTo[w];
                     }
                 }
                 if (seamDistance > minDistance) {
@@ -123,10 +127,9 @@ public class SeamCarver {
                     // Update seam
                     int ind = mHeight - 1;
                     seam[ind--] = pixelToCoordX(minBottomPixel);
-                    for (int p = mEdgeTo[minBottomPixel]; p != s && ind >= 0; p = mEdgeTo[p], ind--) {
+                    for (int p = edgeTo[minBottomPixel]; ind >= 0; p = edgeTo[p], ind--) {
                         seam[ind] = pixelToCoordX(p);
                     }
-                    seam[ind] = pixelToCoordX(s);
                 }
             }
 
@@ -134,13 +137,13 @@ public class SeamCarver {
         }
 
         public void transposeEnergy() {
+            double[] newEnergy = new double[mDims];
             for (int row = 0; row < mHeight; row++) {
-                for (int col = row + 1; col < mWidth; col++) {
-                    double tmp = mEnergy[coordsToPixel(col, row)];
-                    mEnergy[coordsToPixel(col, row)] = mEnergy[coordsToPixelTransposed(row, col)];
-                    mEnergy[coordsToPixelTransposed(row, col)] = tmp;
+                for (int col = 0; col < mWidth; col++) {
+                    newEnergy[coordsToPixelTransposed(row, col)] = mEnergy[coordsToPixel(col, row)];
                 }
             }
+            mEnergy = newEnergy;
             int tmp = mWidth;
             mWidth = mHeight;
             mHeight = tmp;
@@ -196,12 +199,12 @@ public class SeamCarver {
 
     // width of current picture
     public int width() {
-        return mWidth;
+        return isTransposed ? mHeight : mWidth;
     }
 
     // height of current picture
     public int height() {
-        return mHeight;
+        return isTransposed ? mWidth : mHeight;
     }
 
     private boolean validateCoords(int x, int y) {
@@ -254,8 +257,8 @@ public class SeamCarver {
             throw new java.lang.IllegalArgumentException();
         double res;
         if (!isOnBoundary(x, y)) {
-            double xGradientSquared = calculateGradientSquared(x, y,true/*isXGradient*/);
-            double yGradientSquared = calculateGradientSquared(x, y,false/*isXGradient*/);
+            double xGradientSquared = calculateGradientSquared(x, y, true/* isXGradient */);
+            double yGradientSquared = calculateGradientSquared(x, y, false/* isXGradient */);
             res = Math.sqrt(xGradientSquared + yGradientSquared);
         }
         else {
@@ -290,7 +293,7 @@ public class SeamCarver {
 
     // remove vertical seam from current picture
     public void removeVerticalSeam(int[] seam) {
-        if ((mWidth <= 1) || !validateSeam(seam, !isOperHoriz ? mHeight : mWidth))
+        if ((mWidth <= 1) || !validateSeam(seam, mHeight))
             throw new java.lang.IllegalArgumentException();
         if (isTransposed && !isOperHoriz) {
             transposePicture();
@@ -315,8 +318,9 @@ public class SeamCarver {
         eDAG.removeVerticalSeam(seam);
         for (int row = 0; row < mHeight; row++) {
             int seamCol = seam[row];
-            if (seamCol > 0) eDAG.setEnergy(seamCol-1, row, energy(seamCol-1, row));
-            eDAG.setEnergy(seamCol, row, energy(seamCol, row));
+            if (seamCol > 0)          eDAG.setEnergy(seamCol-1, row, energy(seamCol-1, row));
+            if (seamCol < mWidth - 1) eDAG.setEnergy(seamCol, row, energy(seamCol, row));
+            if (mWidth == 1)          eDAG.setEnergy(0, row, energy(0, row));
         }
     }
 
@@ -332,8 +336,6 @@ public class SeamCarver {
 
     // remove horizontal seam from current picture
     public void removeHorizontalSeam(int[] seam) {
-        if (mHeight <= 1 || !validateSeam(seam, mWidth))
-            throw new java.lang.IllegalArgumentException();
         if (!isTransposed) {
             transposePicture();
             eDAG.transposeEnergy();
@@ -343,7 +345,7 @@ public class SeamCarver {
     }
 
     public static void main(String[] args) {
-        /* Test energy, vertical seam
+        /* Test energy, vertical seam */
         Picture picture = new Picture(args[0]);
         StdOut.printf("image is %d pixels wide by %d pixels high.\n", picture.width(), picture.height());
 
@@ -355,22 +357,16 @@ public class SeamCarver {
             for (int col = 0; col < sc.width(); col++)
                 StdOut.printf("%.4f ", sc.energy(col, row));
             StdOut.println();
+        }
 
         StdOut.printf("Printing vertical seam.\n");
-        int seam[] = sc.findVerticalSeam();
-        for (int i = 0; i < sc.height(); i++)
+        int[] seam = sc.findVerticalSeam();
+        for (int i = 0; i < sc.width(); i++)
             StdOut.printf("%d ", seam[i]);
-        StdOut.println()
-        }
-        */
+        StdOut.println();
 
-        /* Test remove vertical seam */
-        Picture inputImg = new Picture(args[0]);
-        int removeColumns = 0;
-        int removeRows = 1;
-
-        StdOut.printf("image is %d columns by %d rows\n", inputImg.width(), inputImg.height());
-        SeamCarver sc = new SeamCarver(inputImg);
+        int removeColumns = 3;
+        int removeRows = 0;
 
         // Stopwatch sw = new Stopwatch();
 
@@ -386,9 +382,5 @@ public class SeamCarver {
         Picture outputImg = sc.picture();
 
         StdOut.printf("new image size is %d columns by %d rows\n", sc.width(), sc.height());
-
-        // StdOut.println("Resizing time: " + sw.elapsedTime() + " seconds.");
-        inputImg.show();
-        outputImg.show();
     }
 }
