@@ -3,11 +3,12 @@ import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
 /**
- *
+ *  SeamCarver class datatype which implements algorithm of smart image resizing.
+ *  This datatype uses maximum ~O(12*W*H) auxilary memory, where W and H are dimensions of an input image.
  */
 public class SeamCarver {
 
-    private final EnergyDigraph eDAG; //<
+    private final EnergyDigraph eDAG; //< 
     private Picture mPicture;         //<
     private int mWidth;               //<
     private int mHeight;              //<
@@ -15,7 +16,10 @@ public class SeamCarver {
     private boolean isOperHoriz;      //<
 
     /**
-     *
+     * Auxilary datatype which represents an energy digraph associated with the given image.
+     * This is acyclic graph of special structure: each pixel (except boundary pixel) has a path to 3 lower neighbors.
+     * It is destined to find a vertical seam (shortest pixel energy path from the top to the bottom of an image).
+     * Problem of finding a seam is equal to the SP problem in acyclic graph and could be solved using topological sort algorithm.
      */
     private class EnergyDigraph {
         private int mHeight;             //<
@@ -100,6 +104,7 @@ public class SeamCarver {
                     edgeTo[p] = -1;
                 }
                 distTo[s] = 0.0;
+
                 // Relax adjacent pixels in topological order to find SP
                 for (int p : topologicalOrder(s)) {
                     int x = pixelToCoordX(p);
@@ -181,20 +186,17 @@ public class SeamCarver {
         eDAG = new EnergyDigraph(mHeight, mWidth);
 
         // initialize an energy digraph data
-        for (int y = 0; y < mHeight; y++) {
-            for (int x = 0; x < mWidth; x++) {
-                eDAG.setEnergy(x, y, energy(x, y));
+        // note: this pattern of pixel traverse is optimal (!!!)
+        for (int x = 0; x < mWidth; x++) {
+            for (int y = 0; y < mHeight; y++) {
+                eDAG.setEnergy(x, y, validEnergy(x, y));
             }
         }
     }
 
     // current picture
     public Picture picture() {
-        if (isTransposed) {
-            transposePicture();
-            eDAG.transposeEnergy();
-        }
-        return mPicture;
+        return isTransposed ? transposedPicture() : new Picture(mPicture);        
     }
 
     // width of current picture
@@ -253,8 +255,16 @@ public class SeamCarver {
 
     // energy of pixel at column x and row y
     public double energy(int x, int y) {
+        if (isTransposed) {
+            transposePicture();
+            eDAG.transposeEnergy();
+        }
         if (!validateCoords(x, y))
             throw new java.lang.IllegalArgumentException();
+        return validEnergy(x, y);
+    }
+
+    private double validEnergy(int x, int y) {
         double res;
         if (!isOnBoundary(x, y)) {
             double xGradientSquared = calculateGradientSquared(x, y, true/* isXGradient */);
@@ -267,15 +277,20 @@ public class SeamCarver {
         return res;
     }
 
-    private void transposePicture() {
+    private Picture transposedPicture() {
         Picture newPicture = new Picture(mHeight, mWidth);
-        for (int row = 0; row < mHeight; row++) {
-            for (int col = 0; col < mWidth; col++) {
+        // note: this pattern of pixel traverse is optimal (!!!)
+        for (int col = 0; col < mWidth; col++) {
+            for (int row = 0; row < mHeight; row++) {
                 int rgb = mPicture.getRGB(col, row);
                 newPicture.setRGB(row, col, rgb);
             }
         }
-        mPicture = newPicture;
+        return newPicture;
+    }
+    
+    private void transposePicture() {
+        mPicture = transposedPicture();
         mWidth = mPicture.width();
         mHeight = mPicture.height();
         isTransposed = !isTransposed;
@@ -293,18 +308,20 @@ public class SeamCarver {
 
     // remove vertical seam from current picture
     public void removeVerticalSeam(int[] seam) {
-        if ((mWidth <= 1) || !validateSeam(seam, mHeight))
-            throw new java.lang.IllegalArgumentException();
         if (isTransposed && !isOperHoriz) {
             transposePicture();
             eDAG.transposeEnergy();
         }
         isOperHoriz = false;
 
+        if ((mWidth <= 1) || !validateSeam(seam, mHeight))
+            throw new java.lang.IllegalArgumentException();
+
         // Update internal picture
         Picture newPicture = new Picture(mWidth - 1, mHeight);
-        for (int row = 0; row < mHeight; row++) {
-            for (int col = 0; col < mWidth; col++) {
+        // note: this pattern of pixel traverse is optimal (!!!)
+        for (int col = 0; col < mWidth; col++) {
+            for (int row = 0; row < mHeight; row++) {
                 if (col == seam[row])
                     continue;
                 int rgb = mPicture.getRGB(col, row);
@@ -318,9 +335,9 @@ public class SeamCarver {
         eDAG.removeVerticalSeam(seam);
         for (int row = 0; row < mHeight; row++) {
             int seamCol = seam[row];
-            if (seamCol > 0)          eDAG.setEnergy(seamCol-1, row, energy(seamCol-1, row));
-            if (seamCol < mWidth - 1) eDAG.setEnergy(seamCol, row, energy(seamCol, row));
-            if (mWidth == 1)          eDAG.setEnergy(0, row, energy(0, row));
+            if (seamCol > 0)          eDAG.setEnergy(seamCol-1, row, validEnergy(seamCol-1, row));
+            if (seamCol < mWidth - 1) eDAG.setEnergy(seamCol, row, validEnergy(seamCol, row));
+            if (mWidth == 1)          eDAG.setEnergy(0, row, validEnergy(0, row));
         }
     }
 
@@ -331,7 +348,7 @@ public class SeamCarver {
             eDAG.transposeEnergy();
         }
         isOperHoriz = true;
-        return eDAG.findVerticalSeam();
+        return findVerticalSeam();
     }
 
     // remove horizontal seam from current picture
@@ -345,28 +362,17 @@ public class SeamCarver {
     }
 
     public static void main(String[] args) {
-        /* Test energy, vertical seam */
-        Picture picture = new Picture(args[0]);
-        StdOut.printf("image is %d pixels wide by %d pixels high.\n", picture.width(), picture.height());
-
-        SeamCarver sc = new SeamCarver(picture);
-
-        StdOut.printf("Printing energy calculated for each pixel.\n");
-
-        for (int row = 0; row < sc.height(); row++) {
-            for (int col = 0; col < sc.width(); col++)
-                StdOut.printf("%.4f ", sc.energy(col, row));
-            StdOut.println();
+        if (args.length != 3) {
+            StdOut.println("Usage:\njava ResizeDemo [image filename] [num cols to remove] [num rows to remove]");
+            return;
         }
 
-        StdOut.printf("Printing vertical seam.\n");
-        int[] seam = sc.findVerticalSeam();
-        for (int i = 0; i < sc.width(); i++)
-            StdOut.printf("%d ", seam[i]);
-        StdOut.println();
+        Picture inputImg = new Picture(args[0]);
+        int removeColumns = Integer.parseInt(args[1]);
+        int removeRows = Integer.parseInt(args[2]);
 
-        int removeColumns = 3;
-        int removeRows = 0;
+        StdOut.printf("image is %d columns by %d rows\n", inputImg.width(), inputImg.height());
+        SeamCarver sc = new SeamCarver(inputImg);
 
         // Stopwatch sw = new Stopwatch();
 
@@ -382,5 +388,9 @@ public class SeamCarver {
         Picture outputImg = sc.picture();
 
         StdOut.printf("new image size is %d columns by %d rows\n", sc.width(), sc.height());
+
+        // StdOut.println("Resizing time: " + sw.elapsedTime() + " seconds.");
+        inputImg.show();
+        outputImg.show();
     }
 }
