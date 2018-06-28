@@ -8,7 +8,7 @@
 #
 # Programming assignment grades (algo-2 part):
 # 6) WordNet: 100/100 points
-# 7)
+# 7) Seam Carving: 101.18/100 points
 # 8)
 # 9)
 # 10)
