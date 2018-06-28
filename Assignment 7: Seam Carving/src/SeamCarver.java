@@ -1,5 +1,4 @@
 import edu.princeton.cs.algs4.Picture;
-import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
 /**
@@ -8,12 +7,12 @@ import edu.princeton.cs.algs4.StdOut;
  */
 public class SeamCarver {
 
-    private final EnergyDigraph eDAG; //< 
-    private Picture mPicture;         //<
-    private int mWidth;               //<
-    private int mHeight;              //<
-    private boolean isTransposed;     //<
-    private boolean isOperHoriz;      //<
+    private final EnergyDigraph eDAG; //< an energy digraph associated with the given image.
+    private Picture mPicture;         //< an internal picture
+    private int mWidth;               //< picture width
+    private int mHeight;              //< picture height
+    private boolean isTransposed;     //< true if picture is transposed with respect to the initial state
+    private boolean isOperHoriz;      //< true if current operation is horizontal
 
     /**
      * Auxilary datatype which represents an energy digraph associated with the given image.
@@ -22,11 +21,17 @@ public class SeamCarver {
      * Problem of finding a seam is equal to the SP problem in acyclic graph and could be solved using topological sort algorithm.
      */
     private class EnergyDigraph {
-        private int mHeight;             //<
-        private int mWidth;              //<
-        private int mDims;               //<
-        private double[] mEnergy;        //<
+        private int mHeight;             //< width
+        private int mWidth;              //< height
+        private int mDims;               //< width * height
+        private double[] mEnergy;        //< energies array
 
+
+        /**
+         * Constructor
+         * @param height
+         * @param width
+         */
         public EnergyDigraph(int height, int width) {
             mHeight = height;
             mWidth = width;
@@ -34,54 +39,61 @@ public class SeamCarver {
             mEnergy = new double[mDims];
         }
 
+        /**
+         * Convert pixel coords (x, y) to pixel index in range of [0, mDims-1]
+         * @param x column index
+         * @param y row index
+         * @return pixel index in [0, mDims-1]
+         */
         private int coordsToPixel(int x, int y) {
             return y * mWidth + x;
         }
 
+        /**
+         * Convert pixel coords (x, y) to pixel transposed index in range of [0, mDims-1]
+         * @param x column index
+         * @param y row index
+         * @return pixel transposed index in [0, mDims-1]
+         */
         private int coordsToPixelTransposed(int x, int y) {
             return y * mHeight + x;
         }
 
+        /**
+         * Find pixel`s x coord
+         * @param p pixel index
+         * @return x coordinate
+         */
         private int pixelToCoordX(int p) {
             return p % mWidth;
         }
 
-        private int pixelToCoordY(int p) {
-            return p / mWidth;
-        }
-
+        /**
+         * Check if pixel index is in range of [0, mDims-1]
+         * @param p pixel index
+         * @return true if pixel index is in range of [0, mDims-1]
+         */
         private boolean isInRange(int p) {
             return p >= 0 && p < mDims;
         }
 
+        /**
+         * Set pixel`s energy
+         * @param x column index
+         * @param y row index
+         * @param energy pixel energy
+         */
         public void setEnergy(int x, int y, double energy) {
             mEnergy[coordsToPixel(x, y)] = energy;
         }
 
-        private Iterable<Integer> topologicalOrder(int pixel) {
-            // Calculate dfs reverse postorder == topological order
-            Queue<Integer> topological = new Queue<>();
-
-            int x = pixelToCoordX(pixel);
-            int y = pixelToCoordY(pixel);
-            int initialParity = (x + y) % 2;
-
-            // It is easy to calculate dfs reverse postorder without dfs run for energy digraph
-            for (int diagBegX = x, diagBegY = y; diagBegX >= 0 && diagBegY < mHeight;) {
-                // Add diagonal pixels starting from (diagBegX, diagBegY)
-                for (int diagX = diagBegX, diagY = diagBegY; diagX < mWidth && diagY < mHeight; diagX++, diagY++) {
-                    topological.enqueue(coordsToPixel(diagX, diagY));
-                }
-                // Set the beggining of the diaglonal which lies below
-                if ((diagBegX + diagBegY) % 2 == initialParity || diagBegX == 0)
-                    diagBegY++;
-                else
-                    diagBegX--;
-            }
-
-            return topological;
-        }
-
+        /**
+         * Relax a pixel to perform SP-algorithm
+         * @param pixel current pixel`s index
+         * @param sourcePixel source pixel`s index
+         * @param distTo mDims array of distances
+         * @param edgeTo mDims array of previous pixels
+         */
         private void relax(int pixel, int sourcePixel, double[] distTo, int[] edgeTo) {
             if (isInRange(pixel) && distTo[pixel] > distTo[sourcePixel] + mEnergy[pixel]) {
                 distTo[pixel] = distTo[sourcePixel] + mEnergy[pixel];
@@ -89,58 +101,54 @@ public class SeamCarver {
             }
         }
 
-        // sequence of indices for vertical seam
+        /**
+         * Find veritcal seam
+         * @return vertical seam index sequence
+         */
         public int[] findVerticalSeam() {
             int[] seam = new int[mHeight];
+
             int[] edgeTo = new int[mDims];
             double[] distTo = new double[mDims];
-            double seamDistance = Double.POSITIVE_INFINITY;
-            int leftBottomPixel = coordsToPixel(0, mHeight-1);
-
-            for (int s = 0; s < mWidth; s++) {
-                // Initialize distances from s to any vertex (pixel)
-                for (int p = 0; p < mDims; p++) {
-                    distTo[p] = Double.POSITIVE_INFINITY;
-                    edgeTo[p] = -1;
-                }
-                distTo[s] = 0.0;
-
-                // Relax adjacent pixels in topological order to find SP
-                for (int p : topologicalOrder(s)) {
-                    int x = pixelToCoordX(p);
-                    int y = pixelToCoordY(p);
-                    if (y < mHeight - 1) {
+            for (int p = 0; p < mDims; p++) {
+                distTo[p] = (p < mWidth) ? mEnergy[p] : Double.POSITIVE_INFINITY;
+                edgeTo[p] = -1;
+            }
+            
+            for (int row = 0; row < mHeight; row++) {
+                for (int col = 0; col < mWidth; col++) {
+                    int p = coordsToPixel(col, row);
+                    if (row < mHeight - 1) {
                         // relax down-left
-                        if (x > 0) relax(p + mWidth - 1, p, distTo, edgeTo);
+                        if (col > 0) relax(p + mWidth - 1, p, distTo, edgeTo);
                         // relax down-left
-                        if (x < mWidth - 1) relax(p + mWidth + 1, p, distTo, edgeTo);
+                        if (col < mWidth - 1) relax(p + mWidth + 1, p, distTo, edgeTo);
                         relax(p + mWidth, p, distTo, edgeTo);
                     }
                 }
-                // Find min distance from top to bottom and appropriate bottom pixel
-                int minBottomPixel = leftBottomPixel;
-                double minDistance = Double.POSITIVE_INFINITY;
-                for (int w = leftBottomPixel; w < mDims; w++) {
-                    if (minDistance > distTo[w]) {
-                        minBottomPixel = w;
-                        minDistance = distTo[w];
-                    }
+            }
+            // Find min distance from top to bottom and appropriate bottom pixel
+            int leftBottomPixel = coordsToPixel(0, mHeight-1);
+            int minBottomPixel = leftBottomPixel;
+            double minDistance = Double.POSITIVE_INFINITY;
+            for (int w = leftBottomPixel; w < mDims; w++) {
+                if (minDistance > distTo[w]) {
+                    minBottomPixel = w;
+                    minDistance = distTo[w];
                 }
-                if (seamDistance > minDistance) {
-                    // Update seam weight
-                    seamDistance = minDistance;
-                    // Update seam
-                    int ind = mHeight - 1;
-                    seam[ind--] = pixelToCoordX(minBottomPixel);
-                    for (int p = edgeTo[minBottomPixel]; ind >= 0; p = edgeTo[p], ind--) {
-                        seam[ind] = pixelToCoordX(p);
-                    }
-                }
+            }
+            int ind = mHeight - 1;
+            seam[ind--] = pixelToCoordX(minBottomPixel);
+            for (int p = edgeTo[minBottomPixel]; ind >= 0; p = edgeTo[p], ind--) {
+                seam[ind] = pixelToCoordX(p);
             }
 
             return seam;
         }
 
+        /**
+         * Transpose energy array and update class properties
+         */
         public void transposeEnergy() {
             double[] newEnergy = new double[mDims];
             for (int row = 0; row < mHeight; row++) {
@@ -154,7 +162,10 @@ public class SeamCarver {
             mHeight = tmp;
         }
 
-        // remove vertical seam from current picture
+        /**
+         * Remove vertical seam from current picture
+         * @param seam index sequence of vertical seam
+         */
         public void removeVerticalSeam(int[] seam) {
             int pixelCopyBegin = coordsToPixel(seam[0], 0);
             for (int row = 0; row < mHeight; row++) {
@@ -168,7 +179,10 @@ public class SeamCarver {
         }
     }
 
-    // create a seam carver object based on the given picture
+    /**
+     * Constructor which creates a seam carver object based on the given picture
+     * @param picture
+     */
     public SeamCarver(Picture picture) {
         if (picture == null)
             throw new java.lang.IllegalArgumentException();
@@ -194,25 +208,46 @@ public class SeamCarver {
         }
     }
 
-    // current picture
+    /**
+     * Return current picture
+     * @return current picture
+     */
     public Picture picture() {
         return isTransposed ? transposedPicture() : new Picture(mPicture);        
     }
 
-    // width of current picture
+    /**
+     * Return width of current picture
+     * @return width of current picture
+     */
     public int width() {
         return isTransposed ? mHeight : mWidth;
     }
 
-    // height of current picture
+    /**
+     * Return height of current picture
+     * @return height of current picture
+     */
     public int height() {
         return isTransposed ? mWidth : mHeight;
     }
 
+    /**
+     * Validate (x, y)
+     * @param x a column index
+     * @param y a row index
+     * @return true if (x, y) is valid
+     */
     private boolean validateCoords(int x, int y) {
         return (x >= 0 && x < mWidth && y >= 0 && y < mHeight);
     }
 
+    /**
+     * Validate a seam
+     * @param seam sequence of seam indexes
+     * @param assumedLength assumed length of a seam to determine a correct direction
+     * @return true if seam is valid
+     */
     private boolean validateSeam(int[] seam, int assumedLength) {
         boolean isValid = true;
         if (seam == null || seam.length != assumedLength)
@@ -233,27 +268,43 @@ public class SeamCarver {
         return isValid;
     }
 
+    /**
+     * Check if (x, y) is on boundary
+     * @param x a column index
+     * @param y a row index
+     * @return true if (x, y) is on boundary
+     */
     private boolean isOnBoundary(int x, int y) {
         return (x == 0) || (x == mWidth - 1) || (y == 0) || (y == mHeight - 1);
     }
 
+    /**
+     * Find squared gradient value in x or y direction
+     * Note: RGB integer-representation to (R, G, B):
+     *       int red = (rgb >> 16) & 0xFF;
+     *       int green = (rgb >> 8) & 0xFF;
+     *       int blue = rgb & 0xFF;
+     * @param x a column index
+     * @param y a row index
+     * @param isXGradient flag to check if x or y gradient is required
+     * @return delta_x * delta_x or delta_y * delta_y
+     */
     private double calculateGradientSquared(int x, int y, boolean isXGradient) {
         int rgbPlus = isXGradient ? mPicture.getRGB(x + 1, y) : mPicture.getRGB(x, y + 1);
         int rgbMinus = isXGradient ? mPicture.getRGB(x - 1, y) : mPicture.getRGB(x, y - 1);
-
-        // RGB integer-representation to (R, G, B):
-        // int red = (rgb >> 16) & 0xFF;
-        // int green = (rgb >> 8) & 0xFF;
-        // int blue = rgb & 0xFF;
-
         double deltaR = ((rgbPlus >> 16) & 0xFF) - ((rgbMinus >> 16) & 0xFF);
         double deltaG = ((rgbPlus >> 8) & 0xFF) - ((rgbMinus >> 8) & 0xFF);
         double deltaB = (rgbPlus & 0xFF) - (rgbMinus & 0xFF);
-
         return deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
     }
 
-    // energy of pixel at column x and row y
+    /**
+     * Find an energy of pixel(x, y)
+     * @param x a column index
+     * @param y a row index
+     * @return energy of pixel (x, y)
+     * Throw an IllegalArgumentException unless {coords are valid}
+     */
     public double energy(int x, int y) {
         if (isTransposed) {
             transposePicture();
@@ -264,6 +315,12 @@ public class SeamCarver {
         return validEnergy(x, y);
     }
 
+    /**
+     * Find an energy of pixel, (x, y) is supposed to be valid
+     * @param x a column index
+     * @param y a row index
+     * @return energy of pixel (x, y)
+     */
     private double validEnergy(int x, int y) {
         double res;
         if (!isOnBoundary(x, y)) {
@@ -277,6 +334,10 @@ public class SeamCarver {
         return res;
     }
 
+    /**
+     * Transpose internal picture and update class properties
+     * @return transposed internal picture
+     */
     private Picture transposedPicture() {
         Picture newPicture = new Picture(mHeight, mWidth);
         // note: this pattern of pixel traverse is optimal (!!!)
@@ -288,7 +349,10 @@ public class SeamCarver {
         }
         return newPicture;
     }
-    
+
+    /**
+     * Transpose internal picture and update class properties
+     */
     private void transposePicture() {
         mPicture = transposedPicture();
         mWidth = mPicture.width();
@@ -296,7 +360,10 @@ public class SeamCarver {
         isTransposed = !isTransposed;
     }
 
-    // sequence of indices for vertical seam
+    /**
+     * Find a sequence of indexes for vertical seam
+     * @return mHeight array of vertical seam indexes
+     */
     public int[] findVerticalSeam() {
         if (isTransposed && !isOperHoriz) {
             transposePicture();
@@ -306,7 +373,11 @@ public class SeamCarver {
         return eDAG.findVerticalSeam();
     }
 
-    // remove vertical seam from current picture
+    /**
+     * Remove vertical seam from current picture
+     * @param seam a sequence of col indexes in a given vertical seam
+     * Throw an IllegalArgumentException unless {seam is a valid}
+     */
     public void removeVerticalSeam(int[] seam) {
         if (isTransposed && !isOperHoriz) {
             transposePicture();
@@ -341,7 +412,10 @@ public class SeamCarver {
         }
     }
 
-    // sequence of indices for horizontal seam
+    /**
+     * Find a sequence of indexes for horizontal seam
+     * @return mWidth array of horizontal seam indexes
+     */
     public int[] findHorizontalSeam() {
         if (!isTransposed) {
             transposePicture();
@@ -351,7 +425,11 @@ public class SeamCarver {
         return findVerticalSeam();
     }
 
-    // remove horizontal seam from current picture
+    /**
+     * Remove horizontal seam from current picture
+     * @param seam a sequence of row indexes in a given horizontal seam
+     * Throw an IllegalArgumentException unless {seam is a valid}
+     */
     public void removeHorizontalSeam(int[] seam) {
         if (!isTransposed) {
             transposePicture();
@@ -361,18 +439,33 @@ public class SeamCarver {
         removeVerticalSeam(seam);
     }
 
+    /**
+     * Unit testing of this class
+     */
     public static void main(String[] args) {
-        if (args.length != 3) {
-            StdOut.println("Usage:\njava ResizeDemo [image filename] [num cols to remove] [num rows to remove]");
-            return;
+        Picture picture = new Picture(args[0]);
+        StdOut.printf("image is %d pixels wide by %d pixels high.\n", picture.width(), picture.height());
+
+        SeamCarver sc = new SeamCarver(picture);
+
+        /*
+        StdOut.printf("Printing energy calculated for each pixel.\n");
+
+        for (int row = 0; row < sc.height(); row++) {
+            for (int col = 0; col < sc.width(); col++)
+                StdOut.printf("%.4f ", sc.energy(col, row));
+            StdOut.println();
         }
 
-        Picture inputImg = new Picture(args[0]);
-        int removeColumns = Integer.parseInt(args[1]);
-        int removeRows = Integer.parseInt(args[2]);
+        StdOut.printf("Printing vertical seam.\n");
+        int[] seam = sc.findVerticalSeam();
+        for (int i = 0; i < sc.width(); i++)
+            StdOut.printf("%d ", seam[i]);
+        StdOut.println();
+        */
 
-        StdOut.printf("image is %d columns by %d rows\n", inputImg.width(), inputImg.height());
-        SeamCarver sc = new SeamCarver(inputImg);
+        int removeColumns = 1;
+        int removeRows = 0;
 
         // Stopwatch sw = new Stopwatch();
 
@@ -385,12 +478,8 @@ public class SeamCarver {
             int[] verticalSeam = sc.findVerticalSeam();
             sc.removeVerticalSeam(verticalSeam);
         }
-        Picture outputImg = sc.picture();
+        // Picture outputImg = sc.picture();
 
         StdOut.printf("new image size is %d columns by %d rows\n", sc.width(), sc.height());
-
-        // StdOut.println("Resizing time: " + sw.elapsedTime() + " seconds.");
-        inputImg.show();
-        outputImg.show();
     }
 }
