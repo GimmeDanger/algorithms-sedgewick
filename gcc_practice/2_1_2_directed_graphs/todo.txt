@@ -1,4 +1,0 @@
-1. directed cycle, topological sort (13.06), start .tex
-2. nonrecursive topological sort (14.06),
-3. strong components (15.06)
-
