@@ -1,0 +1,226 @@
+See the Assessment Guide for information on how to interpret this report.
+
+ASSESSMENT SUMMARY
+
+Compilation:  PASSED
+API:          PASSED
+
+Spotbugs:     FAILED (1 warning)
+PMD:          FAILED (1 warning)
+Checkstyle:   FAILED (0 errors, 11 warnings)
+
+Correctness:  0/13 tests passed
+Memory:       3/3 tests passed
+Timing:       5/9 tests passed
+
+Aggregate score: 31.11%
+[Compilation: 5%, API: 5%, Spotbugs: 0%, PMD: 0%, Checkstyle: 0%, Correctness: 60%, Memory: 10%, Timing: 20%]
+
+ASSESSMENT DETAILS
+
+The following files were submitted:
+----------------------------------
+7.5K Sep  8 22:52 BoggleSolver.java
+
+
+********************************************************************************
+*  COMPILING                                                                    
+********************************************************************************
+
+
+% javac BoggleSolver.java
+*-----------------------------------------------------------
+
+
+================================================================
+
+
+Checking the APIs of your programs.
+*-----------------------------------------------------------
+BoggleSolver:
+
+================================================================
+
+
+********************************************************************************
+*  CHECKING STYLE AND COMMON BUG PATTERNS                                       
+********************************************************************************
+
+
+% spotbugs *.class
+*-----------------------------------------------------------
+M D UP_UNUSED_PARAMETER UP: Static or private method BoggleSolver.prefixExists(String) has unused parameters  At BoggleSolver.java:[line 102]
+Warnings generated: 1
+
+
+================================================================
+
+
+% pmd .
+*-----------------------------------------------------------
+BoggleSolver.java:101: Avoid unused parameter variables, such as 'prefix'. [UnusedFormalParameter]
+PMD ends with 1 warning.
+
+
+================================================================
+
+
+% checkstyle *.java
+*-----------------------------------------------------------
+[WARN] BoggleSolver.java:9: Comment matches to-do format 'TODO:'. [TodoComment]
+[WARN] BoggleSolver.java:76:36: '(' is preceded with whitespace. [MethodParamPad]
+[WARN] BoggleSolver.java:78:36: '(' is preceded with whitespace. [MethodParamPad]
+[WARN] BoggleSolver.java:78:54: ',' is not followed by whitespace. [WhitespaceAfter]
+[WARN] BoggleSolver.java:80:36: '(' is preceded with whitespace. [MethodParamPad]
+[WARN] BoggleSolver.java:80:54: ',' is not followed by whitespace. [WhitespaceAfter]
+[WARN] BoggleSolver.java:82:36: '(' is preceded with whitespace. [MethodParamPad]
+[WARN] BoggleSolver.java:84:36: '(' is preceded with whitespace. [MethodParamPad]
+[WARN] BoggleSolver.java:86:36: '(' is preceded with whitespace. [MethodParamPad]
+[WARN] BoggleSolver.java:88:36: '(' is preceded with whitespace. [MethodParamPad]
+[WARN] BoggleSolver.java:90:36: '(' is preceded with whitespace. [MethodParamPad]
+Checkstyle ends with 0 errors and 11 warning.
+
+
+================================================================
+
+
+********************************************************************************
+*  TESTING CORRECTNESS
+********************************************************************************
+
+Testing correctness of BoggleSolver
+*-----------------------------------------------------------
+Tests 1-9 create one BoggleSolver object corresponding to the specified
+dictionary and call getAllValidWords() with several different boards
+as arguments.
+
+Running 13 total tests.
+
+Test 1: check getAllValidWords() on two fixed 4-by-4 boards given in assignment
+  * dictionary = dictionary-algs4.txt; board = board4x4.txt
+  * dictionary = dictionary-algs4.txt; board = board-q.txt
+==> passed
+
+Test 2: check getAllValidWords() on fixed 4-by-4 boards
+  * dictionary = dictionary-yawl.txt; board = board4x4.txt
+  * dictionary = dictionary-yawl.txt; board = board-points1.txt
+  * dictionary = dictionary-yawl.txt; board = board-points2.txt
+  * dictionary = dictionary-yawl.txt; board = board-points3.txt
+  * dictionary = dictionary-yawl.txt; board = board-points4.txt
+  * dictionary = dictionary-yawl.txt; board = board-points5.txt
+==> passed
+
+Test 3: check getAllValidWords() on more fixed 4-by-4 boards
+  * dictionary = dictionary-yawl.txt; board = board-points100.txt
+  * dictionary = dictionary-yawl.txt; board = board-points200.txt
+  * dictionary = dictionary-yawl.txt; board = board-points300.txt
+  * dictionary = dictionary-yawl.txt; board = board-points400.txt
+  * dictionary = dictionary-yawl.txt; board = board-points500.txt
+  * dictionary = dictionary-yawl.txt; board = board-points750.txt
+  * dictionary = dictionary-yawl.txt; board = board-points1000.txt
+  * dictionary = dictionary-yawl.txt; board = board-points1250.txt
+  * dictionary = dictionary-yawl.txt; board = board-points1500.txt
+  * dictionary = dictionary-yawl.txt; board = board-points2000.txt
+==> passed
+
+Test 4: check getAllValidWords() on random Hasbro boards
+  * dictionary = dictionary-yawl.txt; board = 10 random Hasbro boards
+  * dictionary = dictionary-yawl.txt; board = 50 random Hasbro boards
+  * dictionary = dictionary-yawl.txt; board = 100 random Hasbro boards
+
+
+Total: 0/13 tests passed: Could not complete tests, which results in a reported score of 0.
+================================================================
+********************************************************************************
+*  MEMORY
+********************************************************************************
+
+Analyzing memory of BoggleSolver
+*-----------------------------------------------------------
+Running 3 total tests.
+
+Test 1: memory with dictionary-algs4.txt (must be <= 2x reference solution)
+  * memory of dictionary[]           = 494472 bytes
+  * memory of student   BoggleSolver = 783240 bytes
+  * memory of reference BoggleSolver = 5135408 bytes
+  * student / reference              = 0.15
+==> passed
+
+Test 2: memory with dictionary-shakespeare.txt (must be <= 2x reference solution)
+  * memory of dictionary[]           = 1925328 bytes
+  * memory of student   BoggleSolver = 3062456 bytes
+  * memory of reference BoggleSolver = 17474024 bytes
+  * student / reference              = 0.18
+==> passed
+
+Test 3: memory with dictionary-yawl.txt (must be <= 2x reference solution)
+  * memory of dictionary[]           = 22596016 bytes
+  * memory of student   BoggleSolver = 35227160 bytes
+  * memory of reference BoggleSolver = 179134824 bytes
+  * student / reference              = 0.20
+==> passed
+
+
+Total: 3/3 tests passed!
+
+================================================================
+
+
+
+********************************************************************************
+*  TIMING
+********************************************************************************
+
+Timing BoggleSolver
+*-----------------------------------------------------------
+All timing tests are for random 4-by-4 boards (using the Hasbro dice).
+The dictionary is specified with each test.
+
+Running 9 total tests.
+
+Test 1: timing constructor (must be <= 5x reference solution)
+ *  dictionary-algs4.txt
+    - student   solution time (in seconds): 0.01
+    - reference solution time (in seconds): 0.01
+    - ratio:                                1.20
+
+==> passed
+
+ *  dictionary-enable2k.txt
+    - student   solution time (in seconds): 0.05
+    - reference solution time (in seconds): 0.11
+    - ratio:                                0.46
+
+==> passed
+
+ *  dictionary-yawl.txt
+    - student   solution time (in seconds): 0.06
+    - reference solution time (in seconds): 0.11
+    - ratio:                                0.52
+
+==> passed
+
+ *  dictionary-zingarelli2005.txt
+    - student   solution time (in seconds): 0.16
+    - reference solution time (in seconds): 0.08
+    - ratio:                                1.96
+
+==> passed
+
+Test 2: timing getAllValidWords() for 5.0 seconds using dictionary-yawl.txt
+        (must be <= 2x reference solution)
+    - reference solution calls per second: 8415.74
+    - student   solution calls per second: 0.93
+    - reference / student ratio:           9010.97
+
+=> passed    student <= 10000x reference
+=> FAILED    student <=    25x reference
+=> FAILED    student <=    10x reference
+=> FAILED    student <=     5x reference
+=> FAILED    student <=     2x reference
+
+
+Total: 5/9 tests passed!
+
+
+================================================================
