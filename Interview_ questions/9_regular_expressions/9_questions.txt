@@ -1,0 +1,48 @@
+9. Regular expressions
+
+Nice regexp manual: https://www.rexegg.com/regex-quickstart.html
+Nice nonregular languages warmup: http://www.cs.gordon.edu/courses/cps220/Notes/nonregular_languages
+Detailed proof that DFA can be exponential larger than equivalent NFA: http://www.cs.columbia.edu/~tal/3261/sp17/expdfa.pdf
+
+9.1 Challenging REs. Construct a regular expression for each of the following languages over the binary alphabet or prove that no such regular expression is possible:
+
+a) All strings except 11 or 111.
+Answer: [1]?|(0|10|100|1110|1111)(0|1)*
+
+b) Strings with 1 in every odd-number bit position.
+Answer: (1[01]?)*
+
+c) Strings with an equal number of 0s and 1s.
+Answer: impossible
+TODO: prove after reading warmup
+
+d) Strings with at least two 0s and at most one 1.
+Answer: 00*[1]?00* | 000*[1]? | [1]?000* or equivalent 1000* + 0*0100* + 000*[1]?
+
+e) Strings that when interpreted as a binary integer are a multiple of 3.
+Answer: its possible, but quite hard: https://stackoverflow.com/questions/7974655/regex-for-binary-multiple-of-3
+
+f) Strings with no two consecutive 1s.
+Answer: [1]?(01|0)* or equivalent [0]?(10+)*[01]?
+
+g) Strings that are palindromes (same forwards and backwards).
+Answer: impossible with prdinary cs regexp, but possible in modern "regexp" like perl etc
+Answer: TODO: prove impossibility after reading warmup
+
+h) Strings with an equal number of substrings of the form 01 and 10.
+Answer: TODO
+
+9.2 Exponential-size DFA. Design a regular expressions of length nn such that any DFA that recognizes the same language has an exponential number of states.
+Hint: suppose RE for the set of all bitstrings whose n-th to the last character equals 1, NFA for this RE is linear in n, however it could be prove that equivalent DFA must has exponential number of states. Detailed proof: http://www.cs.columbia.edu/~tal/3261/sp17/expdfa.pdf
+
+9.3 Extensions to NFA. Add to NFA.java the ability to handle multiway or, wildcard ('.'), and the closure operator ('+').
+
+Look through NFA.java
+
+a) Multiway or: suppose that current i-th symbol is ')', than just pop all '|' from stack before the first '(' and save their indexes ('('`s index is lp and j-th '|'`s index is or[j]), than you just need to draw eps-links graph.addEdge(lp, or[j]+1) and graph.addEdge(or[j], i); for every saved j.
+
+b) Wildcard ('.') implementation is realy easy, just match any text character if current regexp symbol is wildcard.
+
+c) Closure operator '+' implementation is almost the same as '*', but you need to draw only one eps-link: graph.addEdge(i+1, lp). However, '*' requires two eps-links: graph.addEdge(i+1, lp) and graph.addEdge(lp, i+1), where lp is the first previous '('.
+
+
