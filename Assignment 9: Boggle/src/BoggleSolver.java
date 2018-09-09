@@ -1,16 +1,15 @@
 import edu.princeton.cs.algs4.Bag;
 import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.PatriciaSET;
 import edu.princeton.cs.algs4.StdOut;
 
 import java.util.ArrayList;
 
 /**
- * TODO: complete final class description
+ * The BoggleSolver class finds all valid words in a given Boggle board, using a given dictionary.
  */
 public class BoggleSolver
 {
-    private final PatriciaSET dictionarySet;
+    private final BoggleTrieSET dictionarySet;
 
     /**
      * Initializes the data structure using the given array of strings as the dictionary.
@@ -18,7 +17,7 @@ public class BoggleSolver
      * @param dictionary
      */
     public BoggleSolver(String[] dictionary) {
-        dictionarySet = new PatriciaSET();
+        dictionarySet = new BoggleTrieSET();
         for (String str : dictionary)
             dictionarySet.add(str);
     }
@@ -73,33 +72,24 @@ public class BoggleSolver
             for (int j = 0; j < n; j++) {
                 int v = i * n + j;
                 if (validateCoords(m, n, i - 1, j - 1))
-                    adj.get(v).add (coordsToVertex(n, i - 1, j - 1));
+                    adj.get(v).add(coordsToVertex(n, i - 1, j - 1));
                 if (validateCoords(m, n, i - 1, j))
-                    adj.get(v).add (coordsToVertex(n,i - 1, j));
+                    adj.get(v).add(coordsToVertex(n, i - 1, j));
                 if (validateCoords(m, n, i - 1, j + 1))
-                    adj.get(v).add (coordsToVertex(n,i - 1, j + 1));
+                    adj.get(v).add(coordsToVertex(n, i - 1, j + 1));
                 if (validateCoords(m, n, i, j + 1))
-                    adj.get(v).add (coordsToVertex(n, i, j + 1));
+                    adj.get(v).add(coordsToVertex(n, i, j + 1));
                 if (validateCoords(m, n, i, j - 1))
-                    adj.get(v).add (coordsToVertex(n, i, j - 1));
+                    adj.get(v).add(coordsToVertex(n, i, j - 1));
                 if (validateCoords(m, n, i + 1, j - 1))
-                    adj.get(v).add (coordsToVertex(n, i + 1, j - 1));
+                    adj.get(v).add(coordsToVertex(n, i + 1, j - 1));
                 if (validateCoords(m, n, i + 1, j))
-                    adj.get(v).add (coordsToVertex(n, i + 1, j));
+                    adj.get(v).add(coordsToVertex(n, i + 1, j));
                 if (validateCoords(m, n, i + 1, j + 1))
-                    adj.get(v).add (coordsToVertex(n, i + 1, j + 1));
+                    adj.get(v).add(coordsToVertex(n, i + 1, j + 1));
             }
         }
         return adj;
-    }
-
-    /**
-     * Check if any word in dictionarySet has a given prefix, this is a critical backtracking optimization
-     * @param prefix
-     * @return true if there is a word in dictionarySet with a given prefix
-     */
-    private boolean prefixExists(String prefix) {
-        return true; //< TODO
     }
 
     /**
@@ -112,7 +102,7 @@ public class BoggleSolver
      * @param marked boolean array for dfs
      * @param s source vertex
      */
-    private void dfs(PatriciaSET boardWordSet, String board, ArrayList<Bag<Integer>> adj,
+    private void dfs(BoggleTrieSET boardWordSet, String board, ArrayList<Bag<Integer>> adj,
                      StringBuilder path, boolean[] marked, int s) {
         marked[s] = true;
         char ch = board.charAt(s);
@@ -121,7 +111,7 @@ public class BoggleSolver
             path.append('U');
 
         String prefix = path.toString();
-        if (prefixExists(prefix)) {
+        if (dictionarySet.hasKeysWithPrefix(prefix)) {
             for (int w : adj.get(s)) {
                 if (!marked[w])
                     dfs(boardWordSet, board, adj, path, marked, w);
@@ -145,7 +135,7 @@ public class BoggleSolver
      */
     public Iterable<String> getAllValidWords(BoggleBoard board) {
         // Resulting iterable object
-        PatriciaSET boardWordSet = new PatriciaSET();
+        BoggleTrieSET boardWordSet = new BoggleTrieSET();
 
         // Explicit Boggle graph data
         int verticesNum = board.rows() * board.cols();
