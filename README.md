@@ -10,6 +10,6 @@
 # 6) WordNet: 100/100 points
 # 7) Seam Carving: 101.18/100 points
 # 8) Baseball elimination: 100/100 points
-# 9)
+# 9) Boggle: 100/100 points
 # 10)
 # Final algo-2 course grade: 
