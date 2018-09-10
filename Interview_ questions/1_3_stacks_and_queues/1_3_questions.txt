@@ -1,0 +1,18 @@
+1. Queue with two stacks. Implement a queue with two stacks so that each queue operations takes a constant amortized number of stack operations.
+
+Let`s say there are two stacks: stack1 and stack2.
+1) Enqueue (e): push e into stack1
+2) Dequeue (): if stack2 is not empty, pop element from stack2. Otherwise, while stack1 is not empty, pop element from stack1 and push it into stack2 if it is not the last element in stack1.
+
+Complexity of Enqueue = O(1), complexity of Dequeue = O(1*)
+
+2. Stack with max. Create a data structure that efficiently supports the stack operations (push and pop) and also a return-the-maximum operation. Assume the elements are reals numbers so that you can compare them.
+
+Maintain two stacks: main_stack, max_stack.
+1) Push (e): If both stacks are empty, push e into both stacks. Otherwise, push e into main_stack, if e is greater or equal than max_stack.top(), push e also into max_stack.
+2) Pop (): If main_stack.top() == max_stack.top(), pop element from both stacks. Otherwise, pop element from main_stack. Note that main_stack.top() <= max_stack.top() always holds by induction.
+3) Return_max (): shows the top of max_stack.
+
+Complexity of all operations = O(1), however auxilary space = O(n) in worst case.
+
+
