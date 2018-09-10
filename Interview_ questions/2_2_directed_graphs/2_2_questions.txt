@@ -2,7 +2,6 @@
 
 2.1 Shortest directed cycle. Given a digraph GG, design an efficient algorithm to find a directed cycle with the minimum number of edges (or report that the graph is acyclic). The running time of your algorithm should be at most proportional to V(E+V) and use space proportional to E +V, where V is the number of vertices and E is the number of edges.
 
-My answer:
 1. Check for parallel directed edges and self loops. if they exist, G has directed cycle of size 1 or 2 ~ O(E + V)
 2. Run BFS from any v from V to find directed cycles which starts from v ~ O(V(E+V))
 3. Find the shortest directed cycle from whose were found in 2 ~ O(V)
@@ -10,7 +9,6 @@ Total ~ O(V(E + V))
 
 2.2 Hamiltonian path in a DAG. Given a directed acyclic graph, design a linear-time algorithm to determine whether it has a Hamiltonian path (a simple path that visits every vertex), and if so, find one.
 
-My answer:
 1. Run topological sort in DAG and find topological order X 
 2. DAG has a Hamiltonian path if adjacent vertexes in X are connected. This property could be checked in linear time.
 Total: ~O(E+V)
@@ -19,7 +17,7 @@ Total: ~O(E+V)
 *DAG: Design a linear-time algorithm to determine whether a DAG has a vertex that is reachable from every other vertex, and if so, find one.
 *Digraph: Design a linear-time algorithm to determine whether a digraph has a vertex that is reachable from every other vertex, and if so, find one.
 
-My answer: Obvious Lemma: a vertex is reachable from any vertex => it has max rank in topological order / lie in strong component with max rank.
+Obvious Lemma: a vertex is reachable from any vertex => it has max rank in topological order / lie in strong component with max rank.
 
 DAG: run topological sort, select a vertex with the max rank (vertex w), run DFS in G^R from w and check if all other vertexes are reachable from w, ~O(V+E)
 
