@@ -1,3 +1,5 @@
+Coursera course: Algorithms (http://algs4.cs.princeton.edu/)
+
 Programming assignment grades (algo-1 part):
 
 1) Percolation: 91/100 points 
