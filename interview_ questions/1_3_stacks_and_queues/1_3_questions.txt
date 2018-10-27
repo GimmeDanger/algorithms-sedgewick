@@ -15,4 +15,6 @@ Maintain two stacks: main_stack, max_stack.
 
 Complexity of all operations = O(1), however auxilary space = O(n) in worst case.
 
+3. Random Generate Subset with Length K By Reservoir Sampling (required for bonus memory test in Assignment):
+https://www.sigmainfy.com/blog/random-generate-subset-with-length-k-by-reservoir-sampling.html
 

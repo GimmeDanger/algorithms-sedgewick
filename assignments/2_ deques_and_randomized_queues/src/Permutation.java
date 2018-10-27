@@ -1,5 +1,6 @@
 import edu.princeton.cs.algs4.StdIn;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
 
 /**
  * Permutation takes a command-line integer k; reads in a sequence of strings from standard input
@@ -16,8 +17,21 @@ public class Permutation {
     public static void main(String[] args)  {
         int k = Integer.parseInt(args[0]);
         RandomizedQueue<String> randQueue = new RandomizedQueue<String>();
-        while (!edu.princeton.cs.algs4.StdIn.isEmpty()) {
-            randQueue.enqueue(StdIn.readString());
+
+        int j = 0;
+        while (k > 0 && !StdIn.isEmpty()) {
+            String str = StdIn.readString();
+            if (j >= k) {
+                int randIndex = StdRandom.uniform(j+1);
+                if (randIndex < k) {
+                    randQueue.dequeue();
+                    randQueue.enqueue(str);
+                }
+            }
+            else {
+                randQueue.enqueue(str);
+            }
+            j++;
         }
         for (int i = 0; i < k; i++) {
             StdOut.println(randQueue.dequeue());

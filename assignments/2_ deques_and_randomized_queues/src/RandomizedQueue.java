@@ -13,10 +13,11 @@ import edu.princeton.cs.algs4.StdRandom;
  * because dequeue and sample operations require linear time.
  */
 public class RandomizedQueue<Item> implements Iterable<Item>  {
-    private Item[] a;
-    private int size;
 
-    // constract an  empty randomize queue
+    private Item[] a; // inserted elements stored as resizing array
+    private int size; // number of inserted elements
+
+    // constract an empty randomized queue
     public RandomizedQueue()
     {
         a = (Item[]) new Object[2];
@@ -35,8 +36,10 @@ public class RandomizedQueue<Item> implements Iterable<Item>  {
         return size;
     }
 
+    // resize the underlying array holding the elements
     private void resize(int capacity)
     {
+        assert capacity >= size;
         Item[] temp = (Item[]) new Object[capacity];
         for (int i = 0; i < size; i++)
             temp[i] = a[i];
@@ -46,22 +49,21 @@ public class RandomizedQueue<Item> implements Iterable<Item>  {
     // add the item
     public void enqueue(Item item)
     {
-        if (item == null) throw new NullPointerException();
-        if (size == a.length) resize(a.length * 2);
-        a[size++] = item;
+        if (item == null) throw new IllegalArgumentException();
+        if (size == a.length) resize(a.length * 2); // double size of array if necessary
+        a[size++] = item; // add item
     }
 
     // remove and return a random item
     public Item dequeue()
     {
-        if (size == 0) throw new NoSuchElementException();
-        int index = (int) (StdRandom.uniform(size));
-        Item temp = a[index];
-        if (index != size - 1)
-            a[index] = a[--size];
-        else
-            a[--size] = null;
-        if (4 * size == a.length) resize(a.length / 2);
+        if (isEmpty()) throw new NoSuchElementException();
+        int randIndex = StdRandom.uniform(size);
+        Item temp = a[randIndex];
+        if (randIndex != size - 1)
+            a[randIndex] = a[size - 1];
+        a[--size] = null; // avoid loitering
+        if (size > 0 && 4 * size == a.length) resize(a.length / 2);
         return temp;
     }
 
@@ -69,7 +71,7 @@ public class RandomizedQueue<Item> implements Iterable<Item>  {
     public Item sample()
     {
         if (size == 0) throw new NoSuchElementException();
-        int index = (int) (StdRandom.uniform(size));
+        int index = StdRandom.uniform(size);
         return a[index];
     }
 
@@ -81,8 +83,9 @@ public class RandomizedQueue<Item> implements Iterable<Item>  {
 
     private class ReverseArrayIterator implements Iterator<Item>
     {
+        private final Item[] r;
         private int index = 0;
-        private Item[] r;
+
         public ReverseArrayIterator() {
             r = (Item[]) new Object[size];
             for (int i = 0; i < size; i++)
@@ -96,7 +99,7 @@ public class RandomizedQueue<Item> implements Iterable<Item>  {
             throw new UnsupportedOperationException();
         }
         public Item next() {
-            if (!hasNext()) throw new java.util.NoSuchElementException();
+            if (!hasNext()) throw new NoSuchElementException();
             Item item = r[index++];
             return item;
         }
@@ -104,15 +107,18 @@ public class RandomizedQueue<Item> implements Iterable<Item>  {
 
     public static void main(String[] args) {
         RandomizedQueue<Integer> rq = new RandomizedQueue<Integer>();
-        rq.isEmpty();
-        rq.enqueue(2);
-        StdOut.println(rq.dequeue());
         StdOut.println(rq.size());
-        rq.isEmpty();
-        rq.isEmpty();
+        rq.enqueue(2);
+        StdOut.println(rq.size());
+        rq.dequeue();
         StdOut.println(rq.size());
         rq.enqueue(30);
-        StdOut.println(rq.dequeue());
+        StdOut.println(rq.size());
         rq.enqueue(9);
+        StdOut.println(rq.size());
+        rq.dequeue();
+        StdOut.println(rq.size());
+        rq.dequeue();
+        StdOut.println(rq.size());
     }
 }
