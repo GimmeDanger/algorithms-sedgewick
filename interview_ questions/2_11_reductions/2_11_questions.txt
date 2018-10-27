@@ -1,0 +1,30 @@
+1. Longest path and longest cycle. Consider the following two problems
+
+LongestPath: Given an undirected graph G and two distinct vertices s and t, find a simple path (no repeated vertices) between s and t with the most edges.
+
+LongestCycle: Given an undirected graph G′, find a simple cycle (no repeated vertices or edges except the first and last vertex) with the most edges.
+
+Show that LongestPath linear-time reduces to LongestCycle.
+
+Solution:
+1) Run LongestCycle () to find the longest cycle LC of length M.
+2) Check in linear time if LC has both s and t, in this case the desired longestPath has been found.
+3) Otherwise, add a simple path from s to t which has a length of M+1 with special "colored" vertices.
+4) Run LongestCycle() to find the longest cycle LC. If it has a length M, then it is the same cycle as in 1), so t and s are in different connected component (and there is no simple path between them).
+5) Otherwise, remove colored vertices which were added in 3 from LC. The rest is the desired simple path.
+
+2. Show that 3Sum linear-time reduces to 4Sum.
+
+1) Let`s denote M = 1 + max|a_i|. 
+2) Add M to any array element, add a new extra element -3M. The new array`s size is N+1. Let`s denote it A'.
+3) Run 4Sum(A'). Extra element -3M must be picked (otherwise, there is no solution for 3SUM) => 
+a'_i + a'_j + a'_k - 3M = 0 => (M + a_i) + (M + a_j) + (M + a_k) - 3M = 0 => a_i + a_j + a_k = 0 => {i, j, k} is 3Sum problem solution.
+
+3. Show that 3Linear linear-time reduces to 3Sum.
+
+1) Let`s denote M = 1 + max|a_i|.
+2) Create a new array A'[1, 2N] of size 2N, there A'[1, N] == {a_i + M: a_i in A[1, N]} and A'[N+1, 2N] == {-8*a_i - 2M: a_i in A[1, N]}
+3) Run 3Sum(A'). Only one element from the second part (A'[N+1, 2N]) will be picked. =>
+a'_i + a'_j + a'_k = 0 => M + a_i + M + a_j - 8a_k - 2M = 0 => a_i + a_j = 8a_k => {i, j, k} is 3Linear problem solution.
+
+
