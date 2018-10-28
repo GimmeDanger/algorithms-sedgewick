@@ -1,88 +1,104 @@
 import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.ResizingArrayStack;
-import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.StdOut;
+// import edu.princeton.cs.algs4.StdDraw;
+import edu.princeton.cs.algs4.ResizingArrayStack;
 import java.util.Arrays;
 
+
 public class FastCollinearPoints {
-    private final ResizingArrayStack<Point> stack = new ResizingArrayStack<Point>();
-    private LineSegment[] segmentsArray = null;
+
+    private static final int MIN_POINTS_PER_SEGMENT = 4;
+    private static final int MIN_EXTRA_POINTS_PER_SEGMENT = 3;
+    private final LineSegment[] segmentsArray;
 
     /**
      * Finds all line segments containing 4 points.
-     * Corner cases. Throw a java.lang.NullPointerException either the argument to the constructor is null or if any point
+     * Corner cases. Throw a java.lang.IllegalArgumentException either the argument to the constructor is null or if any point
      * in the array is null. Throw a java.lang.IllegalArgumentException if the argument to the constructor contains a
      * repeated point.
      */
     public FastCollinearPoints(Point[] points) {
-        if (points == null) throw new NullPointerException("The argument to the constructor is null.");
-        int n = points.length;
 
-        int err = -1;
+        if (points == null)
+            throw new IllegalArgumentException("The argument to the constructor is null.");
         for (Point p : points)
-            if (p != null)
-                err++;
-        if (err < 0) throw new NullPointerException("All points in the argument array are null.");
+            if (p == null)
+                throw new IllegalArgumentException("Arg array contains null a null point.");
+        for (int i = 0; i < points.length; i++)
+            for (int j = i + 1; j < points.length; j++)
+                if (points[i].compareTo(points[j]) == 0)
+                    throw new IllegalArgumentException("Arg array contains a repeated point: " + points[i].toString() + ".");
 
         // Sorting point by coordinate
-        Arrays.sort(points);
+        Point[] pointsSorted = points.clone();
+        Arrays.sort(pointsSorted);
 
+        int n = pointsSorted.length;
         Point[] slopeSorted = new Point[n];
+        ResizingArrayStack<LineSegment> stack = new ResizingArrayStack<>();
+        for (int i = 0; i <= n - MIN_POINTS_PER_SEGMENT; i++) {
 
-        for (int i = 0; i < n - 1; i++) {
-            for (int j = i; j < n; j++)
-                slopeSorted[j] = points[j];
+            // initialize current slope array with unused points
+            int slopeSortedSize = 0;
+            for (int j = i + 1; j < n; j++) {
+                Point q = pointsSorted[j];
+                //if (!used.contains(q))
+                slopeSorted[slopeSortedSize++] = q;
+            }
+            if (slopeSortedSize < MIN_EXTRA_POINTS_PER_SEGMENT)
+                continue;
 
-            Arrays.sort(slopeSorted, i + 1, n, points[i].slopeOrder());
-            Arrays.sort(slopeSorted, 0, i, points[i].slopeOrder());
+            // sort by slope with respect to p
+            Point p = pointsSorted[i];
+            Arrays.sort(slopeSorted, 0, slopeSortedSize, p.slopeOrder());
 
-            // repeated point in the argument array check ////////////
-            if (points[i].compareTo(slopeSorted[i + 1]) == 0)
-                throw new IllegalArgumentException("Argument array contains a repeated point: " + points[i].toString() + ".");
-            if (i >= n - 3) continue;
-            //////////////////////////////////////////////////////////
-
-            int beg = i + 1;
-            int end = i + 2;
-            int prv = 0;
-            while (end < n) {
-                double begSlope = slopeSorted[i].slopeTo(slopeSorted[beg]);
-                while (end < n && begSlope == slopeSorted[i].slopeTo(slopeSorted[end]))
-                    end++;
-                if (end - beg >= 3) {
-                    // check for overlapping segment
-                    double prvSlope = Double.NEGATIVE_INFINITY;
-                    while (prv < i) {
-                        prvSlope = slopeSorted[i].slopeTo(slopeSorted[prv]);
-                        if (prvSlope < begSlope) prv++;
-                        else                     break;
+            // find continuous segment of size MIN_EXTRA_POINTS_PER_SEGMENT
+            int lo = 0;
+            int hi = lo + 1;
+            boolean segFound = false;
+            double loSlope = p.slopeTo(slopeSorted[lo]);
+            while (hi < slopeSortedSize) {
+                double hiSlope = p.slopeTo(slopeSorted[hi]);
+                if (Double.compare(loSlope, hiSlope) != 0) {
+                    if (segFound) {
+                        stack.push(new LineSegment(p, slopeSorted[hi-1]));
                     }
-                    if (prvSlope != begSlope) {
-                        stack.push(slopeSorted[i]);
-                        stack.push(slopeSorted[end - 1]);
-                    }
+                    lo = hi;
+                    segFound = false;
+                    loSlope = hiSlope;
                 }
-                beg = end;
-                end = end + 1;
+                if (hi + 1 - lo >= MIN_EXTRA_POINTS_PER_SEGMENT)
+                    segFound = true;
+                hi++;
+            }
+            if (segFound) {
+                stack.push(new LineSegment(p, slopeSorted[hi-1]));
             }
         }
 
-        segmentsArray = new LineSegment[stack.size() / 2];
+        // There are no equal line segments in stack after previous loop because BruteCollinearPoints input
+        // is not supposed to have 5 or more collinear points due to the assignment comment.
+        segmentsArray = new LineSegment[stack.size()];
         for (int i = 0; i < segmentsArray.length; i++)
-            segmentsArray[i] = new LineSegment(stack.pop(), stack.pop());
+            segmentsArray[i] = stack.pop();
     }
 
     public int numberOfSegments() {
         return segmentsArray.length;
     }
+
     public LineSegment[] segments() {
-        return segmentsArray;
+        int n = numberOfSegments();
+        LineSegment[] temp = new LineSegment[n];
+        for (int i = 0; i < n; i++) {
+            temp[i] = segmentsArray[i];
+        }
+        return temp;
     }
 
     public static void main(String[] args) {
         // read the n points from a file
-        In in = new In("collinear-testing/equidistant.txt");
-        // In in = new In(args[0]);
+        In in = new In(args[0]);
         int n = in.readInt();
         Point[] points = new Point[n];
         for (int i = 0; i < n; i++) {
@@ -92,18 +108,22 @@ public class FastCollinearPoints {
         }
 
         // draw the points
+        /*
+        StdDraw.enableDoubleBuffering();
         StdDraw.setXscale(0, 32768);
         StdDraw.setYscale(0, 32768);
         for (Point p : points) {
             p.draw();
         }
         StdDraw.show();
+        */
 
         // print and draw the line segments
         FastCollinearPoints collinear = new FastCollinearPoints(points);
         for (LineSegment segment : collinear.segments()) {
             StdOut.println(segment);
-            segment.draw();
+            // segment.draw();
         }
+        // StdDraw.show();
     }
 }

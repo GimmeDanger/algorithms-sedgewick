@@ -3,24 +3,20 @@
  * returning all such line segments. To check whether the 4 points p, q, r, and s are collinear, check whether
  * the three slopes between p and q, between p and r, and between p and s are all equal.
  *
- * Performance requirement. The order of growth of the running time of your program should be N4 in the worst case and
+ * Performance requirement. The order of growth of the running time of your program should be N^4 in the worst case and
  * it should use space proportional to n plus the number of line segments returned.
  */
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ResizingArrayStack;
-import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.StdOut;
+import java.util.Arrays;
+
+// import edu.princeton.cs.algs4.StdDraw;
 
 public class BruteCollinearPoints {
-    /**
-     *  Stack of points. If 4 points p, q, r, s are collinear, push p and s to the stack.
-     *  After all points in array Point[] points are checked for collinearity. Pop two points and add new line segment,
-     *  while stack is not empty.
-     */
-    private static double slopeEpsilon = 10e-10;
-    private final ResizingArrayStack<Point> stack = new ResizingArrayStack<Point>();
-    private LineSegment[] segmentsArray = null;
+
+    private final LineSegment[] segmentsArray;
 
     /**
      * Finds all line segments containing 4 points.
@@ -29,36 +25,32 @@ public class BruteCollinearPoints {
      * repeated point.
      */
     public BruteCollinearPoints(Point[] points) {
-        if (points == null) throw new NullPointerException("The argument to the constructor is null.");
-        int n = points.length;
 
-        int err = -1;
+        if (points == null)
+            throw new IllegalArgumentException("The argument to the constructor is null.");
         for (Point p : points)
-            if (p != null)
-                err++;
-        if (err < 0) throw new NullPointerException("All points in the argument array are null.");
-
-        double slope1, slope2, slope3;
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (j == i) continue;
+            if (p == null)
+                throw new IllegalArgumentException("Arg array contains null a null point.");
+        for (int i = 0; i < points.length; i++)
+            for (int j = i + 1; j < points.length; j++)
                 if (points[i].compareTo(points[j]) == 0)
                     throw new IllegalArgumentException("Arg array contains a repeated point: " + points[i].toString() + ".");
-                if (points[j].compareTo(points[i]) != 1) continue;
-                for (int k = 0; k < n; k++) {
-                    if (k == i || k == j || points[k].compareTo(points[j]) != 1) continue;
-                    for (int l = 0; l < n; l++) {
-                        if (l == i || l == j || l == k || points[l].compareTo(points[k]) != 1) continue;
-                        slope1 = points[i].slopeTo(points[j]);
-                        slope2 = points[j].slopeTo(points[k]);
-                        slope3 = points[k].slopeTo(points[l]);
-                        if ((slope1 == Double.POSITIVE_INFINITY && slope2 == Double.POSITIVE_INFINITY &&
-                                slope3 == Double.POSITIVE_INFINITY) ||
-                                Math.abs(slope1 - slope2) < slopeEpsilon && Math.abs(slope2 - slope3) < slopeEpsilon) {
-                            // StdOut.println(i + " " + j + " " + k + " " + " " + l);
-                            stack.push(points[i]);
-                            stack.push(points[l]);
-                        }
+
+        // Sorting point by coordinate
+        Point[] pointsSorted = points.clone();
+        Arrays.sort(pointsSorted);
+
+        int n = pointsSorted.length;
+        ResizingArrayStack<LineSegment> stack = new ResizingArrayStack<>();
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                for (int k = j + 1; k < n; k++) {
+                    for (int s = k + 1; s < n; s++) {
+                        double slope1 = pointsSorted[i].slopeTo(pointsSorted[j]);
+                        double slope2 = pointsSorted[j].slopeTo(pointsSorted[k]);
+                        double slope3 = pointsSorted[k].slopeTo(pointsSorted[s]);
+                        if (Double.compare(slope1, slope2) == 0 && Double.compare(slope2, slope3) == 0)
+                            stack.push(new LineSegment(pointsSorted[i], pointsSorted[s]));
                     }
                 }
             }
@@ -66,9 +58,9 @@ public class BruteCollinearPoints {
 
         // There are no equal line segments in stack after previous loop because BruteCollinearPoints input
         // is not supposed to have 5 or more collinear points due to the assignment comment.
-        segmentsArray = new LineSegment[stack.size() / 2];
+        segmentsArray = new LineSegment[stack.size()];
         for (int i = 0; i < segmentsArray.length; i++)
-            segmentsArray[i] = new LineSegment(stack.pop(), stack.pop());
+            segmentsArray[i] = stack.pop();
     }
 
     /**
@@ -85,13 +77,17 @@ public class BruteCollinearPoints {
      * has 5 or more collinear points.
      */
     public LineSegment[] segments() {
-        return segmentsArray;
+        int n = numberOfSegments();
+        LineSegment[] temp = new LineSegment[n];
+        for (int i = 0; i < n; i++) {
+            temp[i] = segmentsArray[i];
+        }
+        return temp;
     }
 
     public static void main(String[] args) {
         // read the n points from a file
-        In in = new In("collinear-testing/input40.txt");
-        // In in = new In(args[0]);
+        In in = new In(args[0]);
         int n = in.readInt();
         Point[] points = new Point[n];
         for (int i = 0; i < n; i++) {
@@ -100,19 +96,23 @@ public class BruteCollinearPoints {
             points[i] = new Point(x, y);
         }
 
-        // draw the points
+        // draw the points: for dbg purposes
+        /*
+        StdDraw.enableDoubleBuffering();
         StdDraw.setXscale(0, 32768);
         StdDraw.setYscale(0, 32768);
         for (Point p : points) {
             p.draw();
         }
         StdDraw.show();
+        */
 
         // print and draw the line segments
         BruteCollinearPoints collinear = new BruteCollinearPoints(points);
         for (LineSegment segment : collinear.segments()) {
             StdOut.println(segment);
-            segment.draw();
+            // segment.draw();
         }
+        // StdDraw.show();
     }
 }
